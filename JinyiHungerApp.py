@@ -1,13 +1,16 @@
 import requests
 import json
+import base64
 
 """
 ##################################################
-#--------------------TODO------------------------#
+#--------------------NOTES------------------------#
 
+#running this script requires the requests and twilio API libraries to be installed
+#you can install these using pip
 
-#note: in order for this code to work, you must install the requests API and Twilio API.
-#You can install these using pip
+#for Twilio, since this script is using a trial account, your phone number needs to registered on my account to receive text messages
+#just let me know if you want to try it out, otherwise just select to print the results to console.
 
 
 
@@ -20,6 +23,13 @@ print('If you\'re thinking of eating in, I will help you select a good recipe wi
 print('If you\'re thinking of eating out, I will help you select a restaurant around the area!')
 print('Either way I\'ll send you a text message with the results!')
 
+print('')
+print('To start off, in order to use Twilio (text messaging API), you must register your phone number with me, Jinyi, for verification purposes.')
+print('')
+print('Do you want to continue with Twilio or just console output?')
+print('1: Twilio')
+print('2: Just console')
+twilioConsoleSelection=input('Please enter your selection: ')
 
 print('')
 print('Do you want to eat in or eat out today?')
@@ -31,7 +41,7 @@ while(eatInEatOut != str(1) and eatInEatOut !=str(2)):
 
 
 
-#------------------------------------------Eat in - recipe branch ----------------------------------------------#
+#--------------------Eat in - recipe branch -----------------------------------#
 if eatInEatOut==str(1):
 	print('OK! Let\'s eat in today.')
 	print('')
@@ -60,7 +70,7 @@ if eatInEatOut==str(1):
 			ingredientsQuery=(ingredientsQuery + ',' + ingredients[i])
 
 
-	typeOfDish=raw_input('What type of dish do you want to make? -- pizza, omelet, stew, casserole, sandwich, etc: ')
+	typeOfDish=raw_input('What type of dish do you want to make? -- pizza, omelet, stew, casserole, sandwich, burger,etc: ')
 
 
 	url = "http://www.recipepuppy.com/api/"
@@ -92,17 +102,12 @@ if eatInEatOut==str(1):
 
 	userSelectionIndex=int(userSelection)-1
 
-	print('')
-	print('Got it! I\'ll now send over the recipe details to your phone so you can have them on hand.')
-	print('')
-
 	
 
 
 	"""
 	#Twilio
-	#Account SID: AC85008a039ec21701d380c5383a5fc8c0
-	#Auth token: 9bd16297071f8ffb0bb71849c331080d
+
 
 	#Capture useful data from JSON response of previous API calls and send in a text message
 	#Title of recipe, ingredients required, thumbnail, and link for more info.
@@ -122,15 +127,17 @@ if eatInEatOut==str(1):
 	textBodyLine1=('Requested recipe information:\n')
 	textBodyLine2=('Title: ' + rTitle + '\n')
 	textBodyLine3=('Ingredients required: ' + rIngredientsRequired + '\n') 
-	textBodyLine4=('Source: ' + str(rHyperlink) + '\n\n')
+	textBodyLine4=('Source: ' + str(rHyperlink) + '\n')
 
-	
+
+
 
 
 
 
 	#-----------------------------Google maps API, return the nearest supermarket---------------------------#
 
+	print('Got it!')
 	print('But first: where are you located? This is so I can suggest a nearby supermarket to buy ingredients if you so choose!')
 	userLocation=raw_input('You can respond with city name, abbrevations like NYC or LA, ZIP code, an address, etc: ')
 	print('')
@@ -139,9 +146,12 @@ if eatInEatOut==str(1):
 
 	#userLocation.replace(" ", "%20")
 
+	astring64="QUl6YVN5RFA2YU5zaGJha2VmaFlfSDlDWTNwaGdJUTg0VWxKeWZj"
+	astring=base64.b64decode(astring64)
+
 	url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
 
-	querystring = {"query":"supermarkets near " + userLocation, "key":"AIzaSyDP6aNshbakefhY_H9CY3phgIQ84UlJyfc"}
+	querystring = {"query":"supermarkets near " + userLocation, "key":astring}
 
 	#print(querystring)
 
@@ -164,20 +174,27 @@ if eatInEatOut==str(1):
 
 	textBodyIngredients=textBodyLine1+textBodyLine2+textBodyLine3+textBodyLine4+textBodyLine5+textBodyLine6
 
-	userPhoneNumber=str(raw_input("Now please enter your phone number so I can send you the details: "))
+	print(textBodyIngredients)
+
+	if twilioConsoleSelection==1:
+			print('')
+			print('Got it! I\'ll now send over the recipe details to your phone so you can have them on hand.')
+			print('')
+
+			userPhoneNumber=str(raw_input("Now please enter your phone number so I can send you the details: "))
+
+			print('')
+			print('Your text message with the recipe information should be received shortly. Bon Appetit!')
+
+
 
 	print('')
-	print('Your text message with the recipe information should be received shortly. Bon Appetit!')
 
 
 
 
 
-
-
-
-
-#-------------------------------Eat out - restaurant branch ------------------------------#
+#--------------------Eat out - restaurant branch ------------------------------#
 if eatInEatOut==str(2):
 	print('OK! Let\'s eat out today.')
 	print('Where are you located?')
@@ -201,13 +218,14 @@ if eatInEatOut==str(2):
 
 	response = requests.request("GET", url, data=payload, headers=headers, params=querystring)
 
-	#print json.dumps(response.json(), indent=2)
+
 
 
 
 
 	print('I selected five restaurants near your location at ' + userLocation + '.')
-	
+
+
 	responseJSON=json.dumps(response.json())
 	responseDICT=json.loads(responseJSON)
 
@@ -223,13 +241,6 @@ if eatInEatOut==str(2):
 	print('5: ' + responseDICT["businesses"][4]["name"])
 	print('')
 
-	#print(responseDICT[""])    
-
-	#keys=responseDICT.keys()
-	#values=responseDICT.values()
-
-
-
 
 
 
@@ -238,17 +249,17 @@ if eatInEatOut==str(2):
 	userSelectionIndex=int(userSelection)-1
 
 	print('')
-	print('Got it! I\'ll now send over the restaurant details to your phone so you can have them on hand.')
 
-	userPhoneNumber=str(raw_input("Please enter your phone number so I can send you the details: "))
-	#probably check here for correct phone number format. needs format +1XXXXXXXXXX in the api call itself
+	if twilioConsoleSelection==1:
+		print('Got it! I\'ll now send over the restaurant details to your phone so you can have them on hand.')
 
+		userPhoneNumber=str(raw_input("Please enter your phone number so I can send you the details: "))
 
+	else:
+		print('Got it! Printing results to console: ')
 
 	"""
 	#Twilio
-	#Account SID: AC85008a039ec21701d380c5383a5fc8c0
-	#Auth token: 9bd16297071f8ffb0bb71849c331080d
 
 	#Capture useful data from JSON response of previous API calls and send in a text message
 	#Name of restaurant, location, rating, phone number, image_url, price$$$,  etc.
@@ -299,11 +310,13 @@ if eatInEatOut==str(2):
 
 	textBodyRestaurant=textBodyLine1+textBodyLine2+textBodyLine3+textBodyLine4+textBodyLine5+textBodyLine6+textBodyLine7
 
-
+	print(textBodyRestaurant)
 
 	print('')
-	print('Your text message with the restaurant information should be received shortly. Bon Appetit!')
-	#want to include in the body the restaurant details specified by the user.
+
+	if twilioConsoleSelection==1:
+		print('Your text message with the restaurant information should be received shortly. Bon Appetit!')
+		#want to include in the body the restaurant details specified by the user.
 
 	#print(message.sid)
 
@@ -316,21 +329,25 @@ elif eatInEatOut==str(2):
 	textBody=textBodyRestaurant
 
 
-#---------------------------------------Twilio-----------------------------------------#
+#-----------------Twilio-------------------#
 from twilio.rest import Client
 
 
-account_sid = "AC85008a039ec21701d380c5383a5fc8c0"
-auth_token  = "9bd16297071f8ffb0bb71849c331080d"
-
-client = Client(account_sid, auth_token)
+clientA1="QUNjN2NhZmI3ZGZlZmY2YmQwOTRkZWVhNzYyNDdhNjAxOQ=="
+clientB1="ZTZhOWRiNGNhZGJkMWZkMTAzMzk2YWExOGMzYzRkNzc="
 
 
-message = client.messages.create(
-	to=userPhoneNumber,
-	from_="+13233326479",
-	body=textBody,
-	media_url= rimage_url)
+clientA2=base64.b64decode(clientA1)
+clientB2=base64.b64decode(clientB1)
+
+client = Client(clientA2, clientB2)
+
+if twilioConsoleSelection==1:
+	message = client.messages.create(
+		to=userPhoneNumber,
+		from_="+13232187649",
+		body=textBody,
+		media_url= rimage_url)
 
 
 print('')
